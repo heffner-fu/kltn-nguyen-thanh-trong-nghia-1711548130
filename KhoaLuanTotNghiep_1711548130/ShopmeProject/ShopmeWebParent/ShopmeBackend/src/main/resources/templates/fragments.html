@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="page_head(title, remove)" th:remove="${remove}">
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta name="viewport"
+	content="width=device-width,initial-scale=1.0, minimum-scale=1.0">
+<title>[[${title}]]</title>
+
+<link rel="stylesheet" type="text/css"
+	th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+<link rel="stylesheet" type="text/css" th:href="@{/fontawesome/all.css}">
+<link rel="stylesheet" type="text/css" th:href="@{/style.css}">
+<script type="text/javascript" th:src="@{/webjars/jquery/jquery.min.js}"></script>
+<script type="text/javascript"
+	th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/common.js}"></script>
+</head>
+<body>
+	<th th:fragment="column_link(fieldName, columnLabel, removeTag)" th:remove="${removeTag}">
+		<a class="text-white" style="text-decoration: none;"
+			th:href="@{${moduleURL} + '/page/' + ${currentPage} + '?sortField=' + ${fieldName} + '&sortDir=' + ${sortField != fieldName ? sortDir : reverseSortDir} + ${keyword != null ? '&keyword=' +  keyword : ''} + ${categoryId != null ? '&categoryId=' + categoryId : ''}}">
+			[[${columnLabel}]] <span th:if="${sortField == fieldName}" th:class="${sortDir == 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down'}"></span>
+		</a>
+	</th>
+
+	<a class="page-link" th:fragment="page_link(page, name)"
+		th:href="@{${moduleURL} +'/page/' + ${page} + '?sortField=' + ${sortField} + '&sortDir=' + ${sortDir} + ${keyword != null ? '&keyword=' +  keyword : ''} + ${categoryId != null ? '&categoryId=' + categoryId : ''}}">
+		[[${name}]] </a>
+
+	<div th:fragment="update_status(enabled, entityName, entityURL)"
+		th:remove="tag">
+		<a th:if="${enabled == true}"
+			class="fas fa-check-circle fa-2x icon-green"
+			th:href="@{${entityURL} + '/enabled/false'}"
+			th:title="'Disable this ' + ${entityName}"> </a> <a
+			th:if="${enabled == false}" class="fas fa-circle fa-2x icon-dark"
+			th:href="@{${entityURL} + '/enabled/true'}"
+			th:title="'Enable this ' + ${entityName}"></a>
+	</div>
+
+	<div th:fragment="edit(entityName, editURL)" th:remove="tag">
+		<a class="fas fa-edit fa-2x icon-green" th:href="@{${editURL}}"
+			th:title="'Update this ' + ${entityName}"></a>
+	</div>
+
+	<div th:fragment="delete(entityName, deleteURL, entityID, visible)"
+		th:remove="tag">
+		<th:block th:if="${visible}">
+			<a class="fas fa-trash-alt fa-2x icon-dark link-delete"
+				th:href="@{${deleteURL}}" th:entityId="${entityID}"
+				th:title="'Delete this ' + ${entityName}"></a>
+		</th:block>
+	</div>
+
+	<div th:fragment="modal_delete" class="modal fade text-center"
+		id="confirmModal">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Delete Confirmation</h4>
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+				</div>
+				<div class="modal-body">
+					<span id="confirmText"></span>
+				</div>
+				<div class="modal-footer">
+					<a class="btn btn-success" href="" id="yesButton">Yes</a>
+					<button type="button" class="btn btn-danger" data-dismiss="modal">No</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div th:fragment="pagination(entityName)" th:remove="tag">
+		<div class="text-center m-1" th:if="${totalItem} > 0">
+			<span>Showing [[${entityName}]] # [[${start}]] to [[${end}]]
+				of [[${totalItem}]]</span>
+		</div>
+		<div class="text-center m-1" th:unless="${totalItem} > 0">
+			<span>No [[${entityName}]] Found</span>
+		</div>
+		<div th:if="${totalItem} > 4">
+			<nav>
+				<ul class="pagination justify-content-center flex-wrap">
+					<li
+						th:class="${currentPage > 1 ? 'page-item' : 'page-item disabled'}">
+						<a th:replace="fragments :: page_link('1', 'First')"></a>
+					</li>
+					<li
+						th:class="${currentPage > 1 ? 'page-item' : 'page-item disabled'}">
+						<a
+						th:replace="fragments :: page_link(${currentPage - 1}, 'Previous')"></a>
+					</li>
+					<li
+						th:class="${currentPage != i ? 'page-item' : 'page-item active'}"
+						th:each="i : ${#numbers.sequence(1, totalPage)}"><a
+						th:replace="fragments :: page_link(${i}, ${i})"></a></li>
+					<li
+						th:class="${currentPage < totalPage ? 'page-item' : 'page-item disabled'}">
+						<a
+						th:replace="fragments :: page_link(${currentPage + 1}, Next)"></a>
+					</li>
+					<li
+						th:class="${currentPage < totalPage ? 'page-item' : 'page-item disabled'}">
+						<a
+						th:replace="fragments :: page_link(${totalPage}, Last)"></a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+	</div>
+
+
+	<div th:fragment="format_currency(amount)" th:remove="tag">		
+		<span th:if="${CURRENCY_SYMBOL_POSITION == 'Before price'}" th:remove="tag">[[${CURRENCY_SYMBOL}]]</span>[[${#numbers.formatDecimal(amount, 1, THOUSANDS_POINT_TYPE, DECIMAL_DIGISTS, DECIMAL_POINT_TYPE)}]]<span th:if="${CURRENCY_SYMBOL_POSITION == 'After price'}" th:remove="tag">[[${CURRENCY_SYMBOL}]]</span>
+	</div>
+	
+	
+	<div th:fragment="format_time(dateTime)" th:remove="tag">
+		<span th:text="${#dates.format(dateTime, 'yyyy-MM-dd HH:mm:ss')}"></span>
+	</div>
+	
+	
+	<div th:fragment="currency_input(amount)" th:remove="tag">
+
+		<input type="text" readonly class="form-control" th:value="${(CURRENCY_SYMBOL_POSITION == 'Before price' ? CURRENCY_SYMBOL : '') + #numbers.formatDecimal(amount, 1, THOUSANDS_POINT_TYPE, DECIMAL_DIGISTS, DECIMAL_POINT_TYPE) + (CURRENCY_SYMBOL_POSITION == 'After price' ? CURRENCY_SYMBOL : '')}">
+	</div>
+
+
+	<div th:fragment="footer" class="text-center m-3">
+		<p>Nghia Nguyen - copyright &copy; 1711548130</p>
+	</div>
+
+
+</body>
+</html>

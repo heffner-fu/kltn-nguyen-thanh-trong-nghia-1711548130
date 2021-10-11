@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments :: page_head('Brand - Shopme Admin', 'none')" />
+<body>
+	<div class="container-fluid">
+		<div th:replace="navigation :: menu"></div>
+		
+		<div>
+			<h2>Manage Categories</h2>
+			<a th:href="@{/brands/new}" class="fas fa-folder-plus fa-2x icon-dark mr-3" title="Create New Categery"></a>
+			<a th:href="@{/brands/export/csv}" class="fas fa-file-csv fa-2x icon-dark mr-3" title="Export File CSV"></a>
+		</div>
+		
+		<div th:if="${message != null}" class="alert alert-success text-center">
+			[[${message}]]
+		</div>
+		
+		<div>
+			<form th:action="@{/brands/page/1}" class="form-inline m-3">
+				<input type="hidden" name="sortField" th:value="${sortField}"/>
+				<input type="hidden" name="sortDir" th:value="${sortDir}"/>
+				Filter:&nbsp;&nbsp;
+				<input type="search" name="keyword" th:value="${keyword}" class="form-control" required />
+				&nbsp;&nbsp;
+				<button type="submit" class="btn btn-primary">
+					<i class="fas fa-search"></i>
+				</button>
+				&nbsp;&nbsp;
+				<button type="button" class="btn btn-secondary" onclick="clearFilter()">
+					<i class="fas fa-eraser"></i>
+				</button>
+			</form>
+		</div>
+	
+		<div class="full-details">
+			<table class="table table-bordered table-striped table-hover table-responsive-xl">
+				<thead class="thead-dark">
+					<tr>
+						<th th:replace="fragments :: column_link('id', 'Brand ID', 'none')"></th>
+						<th>Logo</th>
+						<th th:replace="fragments :: column_link('name', 'Brand Name', 'none')"></th>
+						<th>Categories</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="brand : ${listBrand}">
+						<td>[[${brand.id}]]</td>
+						<td>
+							<img th:src="@{${brand.logoPath}}" style="width: 100px" class="img-fluid" />
+						</td>
+						<td>[[${brand.name}]]</td>
+						<td>
+							<th:block th:each="brand : ${brand.categories}">
+								<span class="badge badge-secondary" th:text="${brand.name}"></span>
+							</th:block>
+						</td>
+						<td>
+							<div th:replace="fragments :: edit('brand', '/brands/edit/' + ${brand.id})"/>
+							&nbsp;	
+							<div th:replace="fragments :: delete('brand', '/brands/delete/' + ${brand.id}, ${brand.id}, true)"/>											
+						</td>		
+					</tr>
+					
+				</tbody>
+			</table>
+		</div>
+		
+		<div class="less-details">
+			<div th:each="brand : ${listBrand}" class="row m-2">
+				<div class="col-6">
+					<img th:src="@{${brand.logoPath}}" style="width: 200px" class="img-fluid" />
+				</div>
+				<div class="col-6">
+					<div>[[${brand.id}]]</div>
+					<div>[[${brand.name}]]</div>
+					<div class="mt-2">
+						<div th:replace="fragments :: edit('brand', '/brands/edit/' + ${brand.id})"/>
+						&nbsp;
+						<div th:replace="fragments :: delete('brand', '/brands/delete/' + ${brand.id}, ${brand.id}, true)"/>				
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<div th:replace="fragments :: pagination('brands')"></div>
+		
+		<div th:replace="fragments :: modal_delete"></div>
+		
+		<div th:replace="fragments :: footer"></div>
+	
+	</div>
+	
+	
+	<script>
+		$(document).ready(function() {
+			$(".link-delete").on("click", function(e) {
+				e.preventDefault();
+				link = $(this);
+				brandId = link.attr("entityId");
+				$('#yesButton').attr("href", link.attr("href"))
+				$('#confirmText').text("Are you sure want to delete this Category ID " + brandId + " ?");
+				$('#confirmModal').modal();
+				
+			});
+		});
+	
+		function clearFilter() {
+			window.location = "[[@{/brands}]]"
+		}
+	</script>
+	
+</body>
+</html>
