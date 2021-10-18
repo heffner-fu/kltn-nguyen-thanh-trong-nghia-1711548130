@@ -93,6 +93,9 @@ public class CustomerService {
 	
 	public void updateEnabledStatus(Integer id, boolean enabled) {
 		customerRepository.updateEnabledStatus(id, enabled);
+		Customer customer = customerRepository.findById(id).get();
+		customer.setVerificationCode(null);
+		customerRepository.save(customer);
 	}
 	
 	public void delete(Integer id) throws ProductNotFoundException {

@@ -52,7 +52,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.key("1234567890_poiuytrewqasdfghjklmnbvcxz")
 				.tokenValiditySeconds(14 * 24 * 60 * 60)
 			.and()
-				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS);
+				.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
 			;
 	}
 

@@ -17,7 +17,7 @@ public class MainController {
 	@GetMapping("/login")
 	public String viewLoginPage() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		// Check if use had logged and they click button back, they will direct to home page and else they will be direc to Login page
+		// Check if use had logged and they click button back, they will direct to home page and else they will be direct to Login page
 		if (authentication == null || authentication instanceof AnonymousAuthenticationToken) { 
 			return "login";
 		}

@@ -24,6 +24,8 @@ import com.khoaluan.common.model.Customer;
 import com.khoaluan.common.model.Order;
 import com.khoaluan.common.model.ShippingRate;
 import com.khoaluan.site.checkout.CheckoutInfo;
+import com.khoaluan.site.checkout.paypal.PayPalApiException;
+import com.khoaluan.site.checkout.paypal.PayPalService;
 import com.khoaluan.site.service.AddressService;
 import com.khoaluan.site.service.CheckoutService;
 import com.khoaluan.site.service.CustomerService;
@@ -33,6 +35,7 @@ import com.khoaluan.site.service.ShippingRateService;
 import com.khoaluan.site.service.ShoppingCartService;
 import com.khoaluan.site.setting.CurrencySettingBag;
 import com.khoaluan.site.setting.EmailSettingBag;
+import com.khoaluan.site.setting.PaymentSettingBag;
 import com.khoaluan.site.util.Utility;
 
 @Controller
@@ -52,14 +55,14 @@ public class CheckoutController {
 	OrderService orderService;	
 	@Autowired 
 	SettingService settingService;
+	@Autowired
+	PayPalService paypalService;
 	
 	@GetMapping("/checkout")
 	public String showCheckoutPage(Model model, HttpServletRequest request) {
 		Customer customer = getAuthenticatedCustomer(request);
-		
 		Address defaultAddress = addressService.getDefaultAddress(customer);
-		ShippingRate shippingRate = null;
-		
+		ShippingRate shippingRate = null;	
 		if (defaultAddress != null) {
 			model.addAttribute("shippingAddress", defaultAddress.toString());
 			shippingRate = shipService.getShippingRateForAddress(defaultAddress);
@@ -69,14 +72,17 @@ public class CheckoutController {
 		}
 		if (shippingRate == null) {
 			return "redirect:/cart";
-		}
-		
+		}	
 		List<CartItem> cartItems = cartService.listCartItem(customer);
 		CheckoutInfo checkoutInfo = checkoutService.prepareCheckout(cartItems, shippingRate);
-		
+		String currencyCode = settingService.getCurrencyCode();
+		PaymentSettingBag paymentSettingBag = settingService.getPaymentSettings();
+		String paypalClientId = paymentSettingBag.getClientID();	
 		model.addAttribute("checkoutInfo", checkoutInfo);
 		model.addAttribute("cartItems", cartItems);
-		
+		model.addAttribute("customer", customer);
+		model.addAttribute("currencyCode", currencyCode);
+		model.addAttribute("paypalClientId", paypalClientId);	
 		return "checkout/checkout";
 	}
 	
@@ -88,26 +94,20 @@ public class CheckoutController {
 	@PostMapping("/place_order")
 	public String placeOrder(HttpServletRequest request) throws UnsupportedEncodingException, MessagingException {
 		String paymentType = request.getParameter("paymentMethod");
-		PaymentMethod paymentMethod = PaymentMethod.valueOf(paymentType);
-		
-		Customer customer = getAuthenticatedCustomer(request);
-		
+		PaymentMethod paymentMethod = PaymentMethod.valueOf(paymentType);	
+		Customer customer = getAuthenticatedCustomer(request);		
 		Address defaultAddress = addressService.getDefaultAddress(customer);
-		ShippingRate shippingRate = null;
-		
+		ShippingRate shippingRate = null;	
 		if (defaultAddress != null) {
 			shippingRate = shipService.getShippingRateForAddress(defaultAddress);
 		} else {
 			shippingRate = shipService.getShippingRateForCustomer(customer);
-		}
-				
+		}			
 		List<CartItem> cartItems = cartService.listCartItem(customer);
-		CheckoutInfo checkoutInfo = checkoutService.prepareCheckout(cartItems, shippingRate);
-		
+		CheckoutInfo checkoutInfo = checkoutService.prepareCheckout(cartItems, shippingRate);		
 		Order createdOrder = orderService.createOrder(customer, defaultAddress, cartItems, paymentMethod, checkoutInfo);
 		cartService.deleteByCustomer(customer);
-		sendOrderConfirmationEmail(request, createdOrder);
-		
+		sendOrderConfirmationEmail(request, createdOrder);		
 		return "checkout/order_completed";
 	}
 
@@ -115,36 +115,50 @@ public class CheckoutController {
 			throws UnsupportedEncodingException, MessagingException {
 		EmailSettingBag emailSettings = settingService.getEmailSettings();
 		JavaMailSenderImpl mailSender = Utility.prepareMailSender(emailSettings);
-		mailSender.setDefaultEncoding("utf-8");
-		
+		mailSender.setDefaultEncoding("utf-8");		
 		String toAddress = order.getCustomer().getEmail();
 		String subject = emailSettings.getOrderConfirmationSubject();
-		String content = emailSettings.getOrderConfirmationContent();
-		
-		subject = subject.replace("[[orderId]]", String.valueOf(order.getId()));
-		
+		String content = emailSettings.getOrderConfirmationContent();	
+		subject = subject.replace("[[orderId]]", String.valueOf(order.getId()));		
 		MimeMessage message = mailSender.createMimeMessage();
-		MimeMessageHelper helper = new MimeMessageHelper(message);
-		
+		MimeMessageHelper helper = new MimeMessageHelper(message);	
 		helper.setFrom(emailSettings.getFromAddress(), emailSettings.getSenderName());
 		helper.setTo(toAddress);
-		helper.setSubject(subject);
-		
+		helper.setSubject(subject);	
 		DateFormat dateFormatter =  new SimpleDateFormat("HH:mm:ss E, dd MMM yyyy");
-		String orderTime = dateFormatter.format(order.getOrderTime());
-		
+		String orderTime = dateFormatter.format(order.getOrderTime());	
 		CurrencySettingBag currencySettings = settingService.getCurrencySettings();
-		String totalAmount = Utility.formatCurrency(order.getTotal(), currencySettings);
-		
+		String totalAmount = Utility.formatCurrency(order.getTotal(), currencySettings);	
 		content = content.replace("[[name]]", order.getCustomer().getFullName());
 		content = content.replace("[[orderId]]", String.valueOf(order.getId()));
 		content = content.replace("[[orderTime]]", orderTime);
 		content = content.replace("[[shippingAddress]]", order.getShippingAddress());
 		content = content.replace("[[total]]", totalAmount);
-		content = content.replace("[[paymentMethod]]", order.getPaymentMethod().toString());
-		
+		content = content.replace("[[paymentMethod]]", order.getPaymentMethod().toString());		
 		helper.setText(content, true);
 		mailSender.send(message);		
+	}
+	
+	@PostMapping("/process_paypal_order")
+	public String processPayPalOrder(HttpServletRequest request, Model model) 
+			throws UnsupportedEncodingException, MessagingException {
+		String orderId = request.getParameter("orderId");		
+		String pageTitle = "Checkout Failure";
+		String message = null;		
+		try {
+			if (paypalService.validateOrder(orderId)) {
+				return placeOrder(request);
+			} else {
+				pageTitle = "Checkout Failure";
+				message = "ERROR: Transaction could not be completed because order information is invalid";
+			}
+		} catch (PayPalApiException e) {
+			message = "ERROR: Transaction failed due to error: " + e.getMessage();
+		}		
+		model.addAttribute("pageTitle", pageTitle);
+		model.addAttribute("title", pageTitle);
+		model.addAttribute("message", message);		
+		return "message";
 	}
 	
 }
