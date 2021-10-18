@@ -41,29 +41,29 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
-			.antMatchers("/users/**", "/settings/**", "/countries/**", "/states/**").hasAuthority("Admin")
-			
-			.antMatchers("/categories/**", "/brands/**").hasAnyAuthority("Admin", "Editor")
-			
-			.antMatchers("/products/new", "/products/delete/**")
-				.hasAnyAuthority("Admin", "Editor")
+			.antMatchers("/users/**", "/settings/**", "/countries/**", "/states/**").hasAuthority("Admin")		
+			.antMatchers("/categories/**", "/brands/**").hasAnyAuthority("Admin", "Editor")		
+			.antMatchers("/products/new", "/products/delete/**").hasAnyAuthority("Admin", "Editor")
 			.antMatchers("/products/edit/**", "/products/save", "/products/check_unique")
 				.hasAnyAuthority("Admin", "Editor", "Saleperson")
 			.antMatchers("/products", "/products/", "/products/detail/**", "/products/page/**")
 				.hasAnyAuthority("Admin", "Editor", "Saleperson", "Shipper")
 			.antMatchers("/products/**").hasAnyAuthority("Admin", "Editor")
-			.antMatchers("/customers/**", "/orders/**", "/get_shipping_cost").hasAnyAuthority("Admin", "Saleperson", "Shipper")
-			
+			.antMatchers("/customers/**", "/orders/**", "/get_shipping_cost")
+				.hasAnyAuthority("Admin", "Saleperson", "Shipper")
+			.antMatchers("/orders_shipper/update/**").hasAuthority("Shipper")
 			.anyRequest().authenticated()
 			.and()
 			.formLogin()
 				.loginPage("/login")
-				.usernameParameter("email") // we define email here because spring security have default "username" but login page we are using "email".
+				// we define email here because spring security have default "username" but login page we are using "email".
+				.usernameParameter("email") 
 				.permitAll()
 			.and().logout().permitAll()
 			.and()
 				.rememberMe()
-					.key("qwertyuiopasdfghjklzxcvbnm_1234567890")// using remember me for session alive long because when we turn off browser, session will be end.
+					// using remember me for session alive long because when we turn off browser, session will be end.
+					.key("qwertyuiopasdfghjklzxcvbnm_1234567890")
 					.tokenValiditySeconds(24 * 60 * 60)// Setting time for session alive. at here i set time is 1 hours
 					;
 		http.headers().frameOptions().sameOrigin();
@@ -71,9 +71,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	public void configure(WebSecurity web) throws Exception {
-		web.ignoring().antMatchers("/images/**", "/js/**", "/webjars/**");//Accept for using ignoring spring security 
+		//Accept for using ignoring spring security
+		web.ignoring().antMatchers("/images/**", "/js/**", "/webjars/**"); 
 	}
 	
-	
-
 }
