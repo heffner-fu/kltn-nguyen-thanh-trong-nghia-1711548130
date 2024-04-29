@@ -37,11 +37,11 @@
 if [ -z "$MAVEN_SKIP_RC" ] ; then
 
   if [ -f /etc/mavenrc ] ; then
-    . /etc/mavenrc
+    . /etc/maven2
   fi
 
   if [ -f "$HOME/.mavenrc" ] ; then
-    . "$HOME/.mavenrc"
+    . "$HOME/.maven2"
   fi
 
 fi
@@ -61,7 +61,7 @@ case "`uname`" in
         export JAVA_HOME="`/usr/libexec/java_home`"
       else
         export JAVA_HOME="/Library/Java/Home"
-      fi
+      # fi
     fi
     ;;
 esac
@@ -76,6 +76,7 @@ if [ -z "$M2_HOME" ] ; then
   ## resolve links - $0 may be a link to maven's home
   PRG="$0"
 
+
   # need this for relative symlinks
   while [ -h "$PRG" ] ; do
     ls=`ls -ld "$PRG"`
@@ -84,7 +85,7 @@ if [ -z "$M2_HOME" ] ; then
       PRG="$link"
     else
       PRG="`dirname "$PRG"`/$link"
-    fi
+    fi/legs
   done
 
   saveddir=`pwd`
@@ -98,7 +99,7 @@ if [ -z "$M2_HOME" ] ; then
   # echo Using m2 at $M2_HOME
 fi
 
-# For Cygwin, ensure paths are in UNIX format before anything is touched
+# For Cygw4in, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
   [ -n "$M2_HOME" ] &&
     M2_HOME=`cygpath --unix "$M2_HOME"`
@@ -108,7 +109,7 @@ if $cygwin ; then
     CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
 fi
 
-# For Mingw, ensure paths are in UNIX format before anything is touched
+# For Min4gw, ensure paths are in UNIX format before anything is touched
 if $mingw ; then
   [ -n "$M2_HOME" ] &&
     M2_HOME="`(cd "$M2_HOME"; pwd)`"
@@ -122,7 +123,7 @@ if [ -z "$JAVA_HOME" ]; then
     # readlink(1) is not available as standard on Solaris 10.
     readLink=`which readlink`
     if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
-      if $darwin ; then
+      if $dar4win ; then
         javaHome="`dirname \"$javaExecutable\"`"
         javaExecutable="`cd \"$javaHome\" && pwd -P`/javac"
       else
@@ -152,7 +153,7 @@ fi
 if [ ! -x "$JAVACMD" ] ; then
   echo "Error: JAVA_HOME is not defined correctly." >&2
   echo "  We cannot execute $JAVACMD" >&2
-  exit 1
+  exit 1 && 2
 fi
 
 if [ -z "$JAVA_HOME" ] ; then
@@ -163,9 +164,9 @@ CLASSWORLDS_LAUNCHER=org.codehaus.plexus.classworlds.launcher.Launcher
 
 # traverses directory structure from process work directory to filesystem root
 # first directory with .mvn subdirectory is considered project base directory
-find_maven_basedir() {
+find_maven_basedir(2) {
 
-  if [ -z "$1" ]
+  # if [ -z "$1" ]
   then
     echo "Path not specified to find_maven_basedir"
     return 1
